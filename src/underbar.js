@@ -318,6 +318,15 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var obj = {};
+    return function(){
+      var key = JSON.stringify(arguments);
+      if (obj[key]=== undefined) {
+        var result = func.apply(this,arguments);
+        obj[key] = result;
+      }
+      return obj[key] 
+    }
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -327,6 +336,10 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args = Array.prototype.slice.call(arguments).slice(2);
+    setTimeout(function(){
+      func.apply(null,args);
+    },wait)
   };
 
 
@@ -341,6 +354,17 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var newArr =[];
+    var r = Math.floor(Math.random()*array.length);
+    var index = [];
+    for (var i = 0; i < array.length; i++) {
+      while(_.indexOf(index,r) !== -1){
+        r = Math.floor(Math.random()*array.length);
+      }
+      index.push(r);
+      newArr[r]=array[i];
+    }
+return newArr;
   };
 
 
@@ -354,7 +378,26 @@
 
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
+  // _.invoke = function(collection, functionOrKey, args) {
+  //   var arr = [];
+  //   for (var i = 0; i < collection.length; i++) {
+  //     if(typeof functionOrKey === "string"){
+  //       arr.push(collection[i].apply(collection[i],args))
+  //     }else{
+  //     arr.push(functionOrKey.apply(collection[i],args))        
+  //     }
+  //   }
+  //   return arr;
+  // };
+
   _.invoke = function(collection, functionOrKey, args) {
+    return _.map(collection, function(value) {
+      if(typeof functionOrKey === "string"){
+        return value[functionOrKey].apply(value, args); ;
+      }else{
+      return functionOrKey.apply(value, args);        
+      }
+    });
   };
 
   // Sort the object's values by a criterion produced by an iterator.
@@ -362,6 +405,15 @@
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    if(typeof iterator !== "string"){
+      return collection.sort(function(a,b){
+        return iterator(a) > iterator(b);
+      })
+    } else {
+      return collection.sort(function(a,b){
+        return a[iterator] > b[iterator];
+      })
+    }
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -370,13 +422,35 @@
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+    var zipperArray = Array.prototype.slice.call(arguments);
+    var longest = _.sortBy(Array.prototype.slice.call(arguments),'length').reverse()[0].length;
+    var result = []
+    _.each(zipperArray,function(subArr,indZipper){
+      var tmpArr = [];
+      for (var i = 0; i < longest; i++) {
+          tmpArr.push(zipperArray[i][indZipper])
+      }
+      result.push(tmpArr);
+    })
+    return result;
   };
+
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
   // The new array should contain all elements of the multidimensional array.
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+    if(result === undefined){var result = [];}
+    for (var i = 0; i < nestedArray.length; i++) {
+      if(Array.isArray(nestedArray[i])){
+         _.flatten(nestedArray[i],result);
+      }else{
+        result.push(nestedArray[i]);
+      }
+    }
+    return result;
+
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
@@ -397,3 +471,8 @@
   _.throttle = function(func, wait) {
   };
 }());
+
+
+// var fName = function(lastName){
+//   return this + " " + lastName;
+// }
